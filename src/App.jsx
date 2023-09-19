@@ -1,24 +1,9 @@
 import './App.css'
-import { useState } from "react"
+import { useState,useEffect } from "react"
 import ToggleSwitch from '../components/ToggleSwitch'
 function App() {
-  const [state, newState] = useState();
-  fetch(`https://news-api-vaqm.onrender.com/toggle`)
-    .then(function (response) {
-      return (response.json());
-    }).then(function (data) {
-      setData(data.state);
-      console.log(datas);
-    })
-    .catch(function (e) {
-      console.log("error", e);
-    })
   const [title, setTitle] = useState('');
-  const [datas, setData] = useState();
-  const handleState = () => {
-    return newState(!state);
-  }
-  
+  const [data, setData] = useState();
   const handleSubmit = (e) => {
     e.preventDefault();
     const message = { Notice: title }
@@ -34,23 +19,57 @@ function App() {
   }
 
 
+
+  const [isChecked, setIsChecked] = useState(false);
+  useEffect(()=>{
+    async function updateState() {
+      try {
+        const response = await fetch('https://news-api-vaqm.onrender.com/toggle');
+        const data = await response.json();
+        const state = data.state;
+        setData(state)
+        setIsChecked(state)
+        }catch (error) {
+        console.error('Error fetching API data:', error);
+      }
+    }
+    const intervalId = setInterval(() => {
+      updateState()
+    }, 2000);
+  },[])
+  async function APIchange() {
+    setIsChecked(!isChecked);
+    try {
+      const apiUrl = `https://news-api-vaqm.onrender.com/toggle?state=${!isChecked}`;
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+      if(response.ok){
+        setData(data.state)
+      }
+    } catch (error) {
+      console.error('Error fetching API data:', error);
+    }
+  }
+
+
   return (
     <>
-    <div className='container'>
-    <div className='center'>
-        <form onSubmit={handleSubmit}>
-          <label for="Message"><h1 style={{textAlign:'center'}}>Notice:-</h1></label>
-          <textarea id="Message" name="Message" style={{color:'Black'}} value={title} onChange={(e) => setTitle(e.target.value)} required rows='6' placeholder='Type your message here' />
-          <input className='Submit' type="submit" />
-        </form>
+      <div className='container'>
+        <div className='center'>
+        
+          <form onSubmit={handleSubmit}>
+          <h1 style={{ textAlign: 'center',marginTop:'5px',marginBottom:'35px'}}>IOT Display Control</h1>
+            <textarea id="Message" name="Message" style={{ color: 'Black' }} value={title} onChange={(e) => setTitle(e.target.value)} required rows='6' placeholder='Type your message here' />
+            <input className='Submit' type="submit" />
+          </form>
+        </div>
+
+        <div className='info'>
+          <ToggleSwitch isChecked={isChecked} onChange={APIchange} />
+          <h3 className='Status'>Showing: {data ? ('Notice') : ('News')}</h3>
+        </div>
       </div>
-      
-      <div className='info'>
-        <button style={{background: 'white',width:'100%',border:'none',height:'100%'}}className='btn'onChange={handleState} ><ToggleSwitch label="."/></button>
-        <h3 className='Status'>Showing: {datas?('Notice'):('News')}</h3>
-      </div>
-    </div>
-      
+
 
 
 
